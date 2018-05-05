@@ -1,20 +1,18 @@
-FROM centos:latest
+FROM golang:1.9.1-alpine3.6
 MAINTAINER Maxim B. Belooussov <belooussov@gmail.com> Toon Leijtens <toon.leijtens@ing.com>
-RUN yum -y groupinstall "Development Tools"
-RUN yum -y install bc
-RUN yum -y install golang
+RUN apk update
+#RUN apk groupinstall "Development Tools"
+RUN apk add bc git make gcc bash musl-dev libc-dev linux-headers nodejs-npm
+WORKDIR /
 RUN git clone https://github.com/ethereum/go-ethereum
 
 # Davy Jones' Locker
 ARG ETHVERSION=v1.7.3
+RUN mkdir -p /usr/local/sbin
 RUN cd /go-ethereum && git checkout $ETHVERSION && make geth && cp /go-ethereum/build/bin/* /usr/local/sbin/
-RUN yum -y remove golang
 RUN rm -rf /go-ethereum
 
-RUN yum -y install epel-release
-RUN yum -y update
-RUN yum -y install libusb
-RUN yum -y install nodejs npm
+RUN apk add libusb
 RUN git clone https://github.com/cubedro/eth-net-intelligence-api /eth-net-intelligence-api
 
 ARG WS_SECRET
