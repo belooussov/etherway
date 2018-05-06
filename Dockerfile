@@ -1,8 +1,7 @@
 FROM golang:1.9.1-alpine3.6
 MAINTAINER Maxim B. Belooussov <belooussov@gmail.com> Toon Leijtens <toon.leijtens@ing.com>
 RUN apk update
-#RUN apk groupinstall "Development Tools"
-RUN apk add bc git make gcc bash musl-dev libc-dev linux-headers nodejs-npm
+RUN apk add bc git make gcc bash musl-dev libc-dev linux-headers nodejs-npm libusb
 WORKDIR /
 RUN git clone https://github.com/ethereum/go-ethereum
 
@@ -12,7 +11,6 @@ RUN mkdir -p /usr/local/sbin
 RUN cd /go-ethereum && git checkout $ETHVERSION && make geth && cp /go-ethereum/build/bin/* /usr/local/sbin/
 RUN rm -rf /go-ethereum
 
-RUN apk add libusb
 RUN git clone https://github.com/cubedro/eth-net-intelligence-api /eth-net-intelligence-api
 
 ARG WS_SECRET
@@ -20,9 +18,6 @@ ENV WS_SECRET ${WS_SECRET}
 COPY artifacts/app.json /eth-net-intelligence-api/app.json
 RUN sed -i "s/__PW__/`echo $WS_SECRET`/g" /eth-net-intelligence-api/app.json
 RUN cd /eth-net-intelligence-api && npm install -d && npm install pm2 -g
-
-# WORKDIR /eth-net-intelligence-api
-# ENTRYPOINT ["pm2","start","--no-daemon","app.json"]
 
 WORKDIR /
 
@@ -44,7 +39,7 @@ ARG NETWORKID=66
 ENV NETWORKID $NETWORKID
 
 RUN for i in admin user1 user2 user3 user4 user5 user6; do \
-	echo $WS_SECRET > credentials.$i; \
+    echo $WS_SECRET > credentials.$i; \
     /usr/local/sbin/geth --datadir /root/.ethereum --password /root/.ethereum/credentials.$i account new > /root/.ethereum/$i.id; \
     sed -i "s/Address: {//g" /root/.ethereum/$i.id; \
     sed -i "s/}//g" /root/.ethereum/$i.id; \
